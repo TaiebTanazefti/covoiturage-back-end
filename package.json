@@ -13,11 +13,16 @@
   "license": "UNLICENSED",
   "dependencies": {
     "3": "^2.1.0",
+    "bcrypt": "^6.0.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "express-session": "^1.19.0",
     "helmet": "^8.1.0",
+    "memorystore": "^1.6.7",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"
   },
