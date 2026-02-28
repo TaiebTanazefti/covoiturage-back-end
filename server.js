@@ -6,7 +6,7 @@ import express, { json } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import compression from 'compression';
-import { addUtilisateur, getUtilisateur, getUtilisateurParId, updateUtilisateur, updatePasswordUtilisateur, deleteUtilisateur, validerUtilisateur, desactiverUtilisateur, reactiverUtilisateur, updateRoleUtilisateur } from './model/utilisateur.js';
+import { addUtilisateur, getUtilisateur, getUtilisateurParId, getUtilisateurParCourriel, updateUtilisateur, updatePasswordUtilisateur, deleteUtilisateur, validerUtilisateur, desactiverUtilisateur, reactiverUtilisateur, updateRoleUtilisateur, getAdminValideExiste } from './model/utilisateur.js';
 import { getReservation, addReservation, deleteReservation,  getReservationsParUtilisateur, getReservationParTrajetEtUtilisateur, getReservationParId, annulerReservation, accepterReservation, refuserReservation } from './model/reservation.js';
 import { getTrajet, addTrajet, updateTrajet, deleteTrajet, getTrajetsParUtilisateur, getTrajetParId, decrementerPlacesTrajet , incrementerPlacesTrajet } from './model/trajet.js';
 import { userAuth, adminAuth, conducteurAuth } from './auth.js';
@@ -54,7 +54,14 @@ app.post('/api/utilisateur/inscription', async (req, res) => {
     if (!courriel || !password || !nom || !prenom || !role || telephone === undefined) {
       return res.status(400).json({ message: 'Champs requis: courriel, password, nom, prenom, role, telephone' });
     }
-    await addUtilisateur(courriel, password, nom, prenom, role, telephone);
+    const id = await addUtilisateur(courriel, password, nom, prenom, role, telephone);
+    // Valider automatiquement le premier admin (évite le blocage bootstrap)
+    if (role === 'ADMIN') {
+      const adminValideExiste = await getAdminValideExiste();
+      if (!adminValideExiste) {
+        await validerUtilisateur(id);
+      }
+    }
     res.status(201).end();
   } catch (err) {
     if (err.message?.includes('UNIQUE') || err.code === 'SQLITE_CONSTRAINT') {
@@ -62,6 +69,34 @@ app.post('/api/utilisateur/inscription', async (req, res) => {
     }
     throw err;
   }
+});
+
+// Route bootstrap : valide le premier admin sans authentification (courriel + mot de passe requis)
+app.post('/api/utilisateur/valider-premier-admin', async (req, res) => {
+  const { courriel, password } = req.body;
+  if (!courriel || !password) {
+    return res.status(400).json({ message: 'courriel et password requis' });
+  }
+  const adminValideExiste = await getAdminValideExiste();
+  if (adminValideExiste) {
+    return res.status(403).json({ message: 'Un admin validé existe déjà' });
+  }
+  const utilisateur = await getUtilisateurParCourriel(courriel);
+  if (!utilisateur) {
+    return res.status(401).json({ message: 'Identifiants invalides' });
+  }
+  if (utilisateur.role !== 'ADMIN') {
+    return res.status(403).json({ message: 'Seul un admin peut être validé' });
+  }
+  if (utilisateur.valide === 1) {
+    return res.status(200).json({ message: 'Compte déjà validé' });
+  }
+  const ok = await bcrypt.compare(password, utilisateur.password);
+  if (!ok) {
+    return res.status(401).json({ message: 'Identifiants invalides' });
+  }
+  await validerUtilisateur(utilisateur.id);
+  res.status(200).json({ message: 'Admin validé, vous pouvez maintenant vous connecter' });
 });
 
 app.post('/api/utilisateur/login', (request, response, next) => {

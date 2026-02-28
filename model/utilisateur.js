@@ -117,6 +117,13 @@ export async function validerUtilisateur(id) {
   return resultat.changes;
 }
 
+export async function getAdminValideExiste() {
+  const row = await db.get(
+    `SELECT 1 FROM utilisateur WHERE role = 'ADMIN' AND valide = 1 LIMIT 1`
+  );
+  return !!row;
+}
+
 
 export async function desactiverUtilisateur(id) {
   const resultat = await db.run(
