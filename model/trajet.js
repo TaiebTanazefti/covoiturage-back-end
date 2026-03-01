@@ -6,6 +6,26 @@ export async function getTrajet() {
   return trajets;
 }
 
+export async function getTrajetFiltres(pointDeDepart, pointDarrivee, date) {
+  let sql = `SELECT * FROM trajet WHERE statut = 'ACTIF'`;
+  const params = [];
+  if (pointDeDepart) {
+    sql += ` AND pointDeDepart LIKE ?`;
+    params.push(`%${pointDeDepart}%`);
+  }
+  if (pointDarrivee) {
+    sql += ` AND pointDarrivee LIKE ?`;
+    params.push(`%${pointDarrivee}%`);
+  }
+  if (date) {
+    sql += ` AND date(dateEtHeure) = date(?)`;
+    params.push(date);
+  }
+  sql += ` ORDER BY dateEtHeure ASC`;
+  const trajets = await db.all(sql, params);
+  return trajets;
+}
+
 export async function addTrajet(pointDeDepart, pointDarrivee, dateEtHeure, nombreDePlacesDisponibles, utilisateur_id) {
   const resultat = await db.run(
     `INSERT INTO trajet(pointDeDepart, pointDarrivee, dateEtHeure, nombreDePlacesDisponibles, statut, utilisateur_id)

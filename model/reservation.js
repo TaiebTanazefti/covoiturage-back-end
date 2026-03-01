@@ -13,6 +13,14 @@ export async function getReservationsParUtilisateur(utilisateur_id) {
   return reservations;
 }
 
+export async function getReservationsParTrajet(trajet_id) {
+  const reservations = await db.all(
+    `SELECT * FROM reservation WHERE trajet_id = ?`,
+    [trajet_id]
+  );
+  return reservations;
+}
+
 export async function getReservationParId(id) {
   const reservation = await db.get(
     `SELECT * FROM reservation WHERE id = ?`,
@@ -90,4 +98,18 @@ export async function refuserReservation(id) {
   );
 
   return resultat.changes; // 1 si ok, 0 sinon
+}
+
+/** True if me and target had a completed trip together (ACCEPTEE, trip date in the past). */
+export async function aEuTrajetCompleteAvec(meId, targetId) {
+  const row = await db.get(
+    `SELECT 1 FROM reservation r
+     INNER JOIN trajet t ON r.trajet_id = t.id
+     WHERE r.statut = 'ACCEPTEE'
+       AND datetime(t.dateEtHeure) < datetime('now')
+       AND ((r.utilisateur_id = ? AND t.utilisateur_id = ?) OR (r.utilisateur_id = ? AND t.utilisateur_id = ?))
+     LIMIT 1`,
+    [meId, targetId, targetId, meId]
+  );
+  return !!row;
 }

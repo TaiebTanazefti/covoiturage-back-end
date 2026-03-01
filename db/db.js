@@ -1,6 +1,7 @@
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { existsSync } from 'node:fs';
+import bcrypt from 'bcrypt';
 
 // Vérifie si le fichier de base de données est 
 // nouveau (n'existe pas encore)
@@ -58,7 +59,57 @@ if(IS_NEW) {
 
         );
 
+        CREATE TABLE piece_identite(
+        id INTEGER PRIMARY KEY,
+        utilisateur_id INTEGER NOT NULL,
+        statut TEXT NOT NULL DEFAULT 'EN_ATTENTE',
+        date_soumission TEXT NOT NULL,
+        image_data TEXT,
+        FOREIGN KEY (utilisateur_id) REFERENCES utilisateur(id)
+        );
+
     `);
+    // Comptes par défaut (valides et actifs)
+    const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'Admin123!';
+    const hash = await bcrypt.hash(defaultPassword, 10);
+
+    const adminEmail = process.env.ADMIN_DEFAULT_EMAIL || 'admin@collegelacite.ca';
+    await db.run(
+        `INSERT INTO utilisateur(courriel, password, nom, prenom, role, telephone, valide, actif)
+         VALUES(?, ?, ?, ?, 'ADMIN', ?, 1, 1)`,
+        [adminEmail, hash, 'Admin', 'Système', 0]
+    );
+    console.log('Compte admin par défaut créé:', adminEmail);
+
+    const passagerEmail = process.env.PASSAGER_DEFAULT_EMAIL || 'passager@collegelacite.ca';
+    await db.run(
+        `INSERT INTO utilisateur(courriel, password, nom, prenom, role, telephone, valide, actif)
+         VALUES(?, ?, ?, ?, 'PASSAGER', ?, 1, 1)`,
+        [passagerEmail, hash, 'Dupont', 'Marie', 6135550001]
+    );
+    console.log('Compte passager par défaut créé:', passagerEmail);
+
+    const conducteurEmail = process.env.CONDUCTEUR_DEFAULT_EMAIL || 'conducteur@collegelacite.ca';
+    await db.run(
+        `INSERT INTO utilisateur(courriel, password, nom, prenom, role, telephone, valide, actif)
+         VALUES(?, ?, ?, ?, 'CONDUCTEUR', ?, 1, 1)`,
+        [conducteurEmail, hash, 'Martin', 'Jean', 6135550002]
+    );
+    console.log('Compte conducteur par défaut créé:', conducteurEmail);
+} else {
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS piece_identite(
+        id INTEGER PRIMARY KEY,
+        utilisateur_id INTEGER NOT NULL,
+        statut TEXT NOT NULL DEFAULT 'EN_ATTENTE',
+        date_soumission TEXT NOT NULL,
+        image_data TEXT,
+        FOREIGN KEY (utilisateur_id) REFERENCES utilisateur(id)
+        );
+    `);
+    try {
+      await db.run('ALTER TABLE piece_identite ADD COLUMN image_data TEXT');
+    } catch (_) { /* column may already exist */ }
 }
 
 export { db }

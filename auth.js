@@ -15,17 +15,18 @@ passport.use(
         if (!utilisateur) {
           return done(null, false);
         }
-         
-        if (utilisateur.valide === 0) {
-         return done(null, false);
-        }
 
-        if (utilisateur.actif === 0) {
-          return done(null, false);
-        }
         const ok = await bcrypt.compare(password, utilisateur.password);
         if (!ok) {
           return done(null, false);
+        }
+
+        if (utilisateur.valide === 0) {
+          return done(null, false, { message: 'COMPTE_NON_VALIDE' });
+        }
+
+        if (utilisateur.actif === 0) {
+          return done(null, false, { message: 'COMPTE_DESACTIVE' });
         }
 
         return done(null, utilisateur);
