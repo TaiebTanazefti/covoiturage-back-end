@@ -1,5 +1,6 @@
 // Chargement du fichier de configuration
 import 'dotenv/config'
+console.log('DB_FILE =', process.env.DB_FILE);
 
 // Importations générales du projet
 import express, { json } from 'express'
@@ -402,10 +403,19 @@ app.get('/api/reservation/:id', userAuth, async (req, res) => {
 
 app.get('/api/mes-reservations', userAuth, async (req, res) => {
   const utilisateur_id = req.user.id;
-
   const reservations = await getReservationsParUtilisateur(utilisateur_id);
 
-  res.status(200).json(reservations);
+  const withTrip = await Promise.all(reservations.map(async (r) => {
+    const trajet = await getTrajetParId(r.trajet_id);
+    const driver = trajet ? await getUtilisateurParId(trajet.utilisateur_id) : null;
+    const sanitize = (u) => u ? { id: u.id, nom: u.nom, prenom: u.prenom, courriel: u.courriel } : null;
+    return {
+      ...r,
+      trajet: trajet ? { ...trajet, conducteur: sanitize(driver) } : null
+    };
+  }));
+
+  res.status(200).json(withTrip);
 });
 app.post('/api/reservation', userAuth, async (req, res) => {
   const { trajet_id } = req.body;
