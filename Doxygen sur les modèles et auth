@@ -1,0 +1,14 @@
+[33m9917c29[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m docs: ajout changelog conception S1-S2
+[33m4d01f33[m docs: ajout cahier de conception
+[33m7837776[m docs: ajout .env.example et structure docs
+[33m9c7b5dc[m docs: ajout README, .env.example et dossier docs
+[33m49679e3[m fix: resolve merge conflict
+[33m5cb5d95[m feat: mise a jour backend reservations et trajets
+[33m0fa0270[m[33m ([m[1;31morigin/master[m[33m)[m ajouter les requetes http
+[33mc970e88[m Ajout de la fonctionnalité de réinitialisation de mot de passe pour les utilisateurs, incluant la vérification par email et des améliorations de sécurité. Mise à jour de l'interface utilisateur pour faciliter l'accès à cette fonctionnalité.
+[33m8a4f9ea[m Ajout de la fonction pour vérifier l'existence d'un admin validé et mise à jour de l'inscription des utilisateurs pour valider automatiquement le premier admin. Création d'une nouvelle route pour valider le premier admin sans authentification, améliorant ainsi la gestion des utilisateurs administrateurs.
+[33m1b167e6[m Ajout de la gestion des préférences utilisateur, permettant la personnalisation des notifications et des paramètres de compte. Amélioration de l'interface utilisateur pour une meilleure expérience lors de la gestion des réservations.
+[33m595b463[m Ajout de la gestion des notifications pour les utilisateurs, y compris l'envoi d'emails de confirmation et de rappels pour les réservations. Amélioration de la sécurité avec des vérifications supplémentaires lors de la création de comptes utilisateurs.
+[33m715740e[m Ajout de fonctionnalités pour la gestion des utilisateurs, trajets et réservations. Intégration de la validation des utilisateurs, gestion des rôles, et mise à jour des mots de passe avec bcrypt. Amélioration des routes API pour les réservations, y compris l'annulation et l'acceptation des réservations. Ajout de la gestion des places disponibles pour les trajets.
+[33m4dc36c9[m initialisation de projet
+[33m06851fb[m Initial commit
