@@ -1,3 +1,11 @@
+/**
+ * @file db.js
+ * @description Initialisation et connexion à la base de données SQLite.
+ *              Crée automatiquement les tables et les comptes par défaut
+ *              (admin, conducteur, passager) lors du premier démarrage.
+ *              Les variables de configuration sont lues depuis le fichier .env.
+ */
+
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { existsSync } from 'node:fs';

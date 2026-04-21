@@ -183,6 +183,7 @@ app.get('/api/admin/stats', adminAuth, async (req, res) => {
     const stats = await getAdminStats();
     res.status(200).json(stats);
   } catch (err) {
+    console.error('STATS ERROR:', err); // <-- ajouté pour déboguer
     res.status(500).json({ message: err.message || 'Erreur serveur' });
   }
 });
@@ -491,7 +492,7 @@ app.delete('/api/reservation/:id', userAuth, async (req, res) => {
   // 4) annuler la réservation
   const ok = await annulerReservation(reservation_id);
   if (ok === 0) {
-    return res.status(400).json({ message: 'Impossible d’annuler' });
+    return res.status(400).json({ message: "Impossible d'annuler" });
   }
 
   // 5) rendre la place au trajet
@@ -529,7 +530,7 @@ app.patch('/api/reservation/:id/accepter', userAuth, async (req, res) => {
   // 4) accepter
   const ok = await accepterReservation(reservation_id);
   if (ok === 0) {
-    return res.status(400).json({ message: 'Impossible d’accepter' });
+    return res.status(400).json({ message: "Impossible d'accepter" });
   }
 
   res.status(200).json({ message: 'Réservation acceptée' });
@@ -574,8 +575,6 @@ app.patch('/api/reservation/:id/refuser', userAuth, async (req, res) => {
 });
 
 // Trajet
-
-
 
 app.get('/api/trajet', async (request, response) => {
     const { pointDeDepart, pointDarrivee, date } = request.query;
@@ -677,6 +676,41 @@ app.patch('/api/trajet/:id/annuler', userAuth, async (req, res) => {
   res.status(200).json({ message: 'Trajet annulé' });
 });
 
+/**
+ * @route PATCH /api/trajet/:id/terminer
+ * @description Permet au conducteur de marquer un trajet actif comme terminé.
+ *              Met le statut du trajet à TERMINE et passe toutes les réservations
+ *              ACCEPTEE au statut TERMINEE, ce qui permet aux passagers de noter
+ *              le conducteur et vice-versa.
+ * @access Privé - conducteur propriétaire du trajet uniquement
+ * @param {number} req.params.id - L'identifiant du trajet à terminer.
+ * @returns {200} message de confirmation
+ * @returns {400} Si le trajet n'est pas actif
+ * @returns {403} Si l'utilisateur n'est pas le conducteur du trajet
+ * @returns {404} Si le trajet est introuvable
+ */
+app.patch('/api/trajet/:id/terminer', userAuth, async (req, res) => {
+  const id = req.params.id;
+  const trajet = await getTrajetParId(id);
+  if (!trajet) {
+    return res.status(404).json({ message: 'Trajet introuvable' });
+  }
+  if (trajet.utilisateur_id !== req.user.id) {
+    return res.status(403).json({ message: 'Accès interdit' });
+  }
+  if (trajet.statut !== 'ACTIF') {
+    return res.status(400).json({ message: 'Seul un trajet actif peut être terminé' });
+  }
+  const reservations = await getReservationsParTrajet(id);
+  for (const r of reservations) {
+    if (r.statut === 'ACCEPTEE') {
+      await updateStatutReservation(r.id, 'TERMINEE');
+    }
+  }
+  await updateStatutTrajet(id, 'TERMINE');
+  res.status(200).json({ message: 'Trajet terminé' });
+});
+
 app.delete('/api/trajet', userAuth, async (request, response) => {
     const id = request.body?.id ?? request.body?.idTrajet;
     if (!id) {
@@ -708,6 +742,7 @@ app.get('/api/mes-trajets', userAuth, async (req, res) => {
 
   res.status(200).json(trajets);
 });
+
 // Gestionnaire d'erreurs global
 app.use((err, req, res, next) => {
   console.error(err);
