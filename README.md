@@ -16,7 +16,7 @@ Application de covoiturage développée dans le cadre du cours au Collège La Ci
 ### 1. Cloner le projet
 
 ```bash
-git clone <url-du-repo>
+git clone https://github.com/TaiebTanazefti/covoiturage-back-end.git
 cd covoiturage-back-end
 ```
 
